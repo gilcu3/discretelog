@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "discretelog"
+version = "0.1.0"
+description = "Discrete logarithms in the ring of integers modulo n"
+authors = ["gilcu3"]
+readme = "README.md"
+license = "Apache Software License 2.0"
+homepage = "https://github.com/gilcu3/discretelog"
+repository = "https://github.com/gilcu3/discretelog"
+keywords = ["discrete logarithm", "number theory", "cryptography"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+	"Intended Audience :: Education",
+	"Intended Audience :: Science/Research",
+	"Topic :: Scientific/Engineering :: Mathematics",
+	"Topic :: Software Development :: Libraries :: Python Modules",
+	"Topic :: Utilities"
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+colorama = "^0.4.6"
+primefac = "^2.0.12"
+tqdm = "^4.66.4"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
