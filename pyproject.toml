@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "discretelog"
-version = "0.1.0"
+version = "0.1.1"
 description = "Discrete logarithms in the ring of integers modulo n"
 authors = ["gilcu3"]
 readme = "README.md"

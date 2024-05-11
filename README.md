@@ -15,7 +15,7 @@ python -m discretelog 25 641629670911834423534 1540571422742786915303
 ### Installation
 The library is available in `pypi`, therefore can be installed with:
 ```bash
-python -m pip install
+python -m pip install discretelog
 ```
 
 ### Building from source
