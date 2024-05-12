@@ -104,13 +104,15 @@ def factor(n, DEBUG=False):
             ps = []
             try:
                 for p in primefac(n, trial=10**4, rho=2 * 10**5,
-                                  methods=tuple(), verbose=DEBUG):
+                                  methods=None, verbose=DEBUG):
                     if isprime(p):
                         n //= p
                         ps += [p]
                     else:
                         break
             except AssertionError:
+                pass
+            except TypeError:
                 pass
             if n > 1:
                 for p in factor_yafu(n, pretest=True, DEBUG=DEBUG):
