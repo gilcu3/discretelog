@@ -16,13 +16,13 @@ def single_test(psize, random):
     h = pow(b, e, p)
     assert dlog_prime(b, h, p, True) == e
 
+
 @pytest.mark.slow
 def test_dlog_prime_special():
     tests = [(1540571422742786915303, 25,
              690483026481419643586, 641629670911834423534)]
     for p, b, e, h in tests:
-        ee = dlog_prime(b, h, p, True)
-        assert ee == e
+        assert dlog_prime(b, h, p, True) == e
 
 
 def test_dlog_prime_small(frandom):
@@ -32,6 +32,5 @@ def test_dlog_prime_small(frandom):
             single_test(psize, frandom)
 
 
-@pytest.mark.slow
-def test_dlog_prime_large(frandom):
-    single_test(15, True)
+def test_dlog_prime_medium(frandom):
+    single_test(15, frandom)
