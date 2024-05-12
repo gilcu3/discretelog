@@ -104,7 +104,7 @@ def factor(n, DEBUG=False):
             ps = []
             try:
                 for p in primefac(n, verbose=True, trial=10**4, rho=2 * 10**5,
-                                  methods=tuple()):
+                                  methods=tuple(), verbose=DEBUG):
                     if isprime(p):
                         n //= p
                         ps += [p]
