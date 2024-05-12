@@ -389,7 +389,7 @@ class CongruenceFinder:
                 yield c2, c1, fn
 
     def sieve_values_parallel(self, n, DEBUG):
-        if True or (self.c2 + n) <= 1000 or cpu_count() <= 1:
+        if (self.c2 + n) <= 1000 or cpu_count() <= 1:
             yield from self.sieve_values(n, DEBUG)
             return
         rng = range(self.c2, self.c2 + n)
@@ -463,7 +463,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         op = order(gy, p)
     assert isprime(op)
     assert (p - 1) % op == 0
-    assert op >= 10 ** 5
+    assert op >= 10 ** 6
     assert order(gy, p) == op
     opq = op
     while (p - 1) % (opq * op) == 0:
@@ -515,7 +515,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
             if DEBUG:
                 print('solution not converging, trying higher qlimit')
             return linear_sieve_dlog(p, gy, y, op, qlimit+50, climit, DEBUG)
-        nclimit = climit if first else max(50,climit//10)
+        nclimit = climit if first else max(50, climit // 10)
         if DEBUG:
             print(f'\nSolving: p={p} gy={gy} y={y} fbp={len(fbq)}',
                   f'qlimit={qlimit}',

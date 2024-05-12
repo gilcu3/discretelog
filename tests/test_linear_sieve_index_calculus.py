@@ -66,25 +66,25 @@ def test_special(frandom):
 
 
 def test_linear_sieve_dlog_small(frandom):
-    ntests = 200
+    ntests = 500
     print('sophie germaine primes')
-    for psize in range(5, 9):
+    for psize in range(6, 9):
         print(f'psize={psize}')
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
 
 
 def test_linear_sieve_dlog_medium(frandom):
-    ntests = 20
+    ntests = 100
     print('sophie germaine primes')
     for psize in range(9, 14):
         print(f'psize={psize}')
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
-    ntests = 20
+    ntests = 100
     print('higher order')
     for _ in mrange(ntests, DEBUG=True):
-        higher_order_test(5, frandom)
+        higher_order_test(6, frandom)
 
 
 @pytest.mark.slow

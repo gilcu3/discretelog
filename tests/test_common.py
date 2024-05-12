@@ -41,5 +41,5 @@ def test_factor_large(frandom):
           + Fore.RESET + '\n')
     for d in mrange(30, 100, 10, True):
         single_test_factor_random(d, frandom)
-    for d in mrange(30, 60, 10, True):
+    for d in mrange(30, 40, 1, True):
         single_test_factor_rsa(d, frandom)

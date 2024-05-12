@@ -21,7 +21,7 @@ def single_test_random(nb, random):
 
 
 def test_dlog_small(frandom):
-    ntests = 200
+    ntests = 1000
     print('\n' + Fore.RED + 'Testing small values' + Fore.RESET + '\n')
     for nb in mrange(5, 30, 1, True):
         for _ in range(ntests):
@@ -30,7 +30,7 @@ def test_dlog_small(frandom):
 
 def test_dlog_medium(frandom):
     print('\n' + Fore.RED + 'Testing medium values' + Fore.RESET + '\n')
-    for nb in mrange(30, 60, 2, True):
+    for nb in mrange(30, 60, 1, True):
         single_test_random(nb, frandom)
 
 
