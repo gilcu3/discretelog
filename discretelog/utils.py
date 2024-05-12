@@ -89,7 +89,7 @@ def parallel_for_balanced(f, params, prange, cores=None, DEBUG=False):
             if c is not None:
                 j, resj = c
                 res[j] = resj
-                if pb:
+                if DEBUG:
                     pb.update(1)
             else:
                 ended += 1
