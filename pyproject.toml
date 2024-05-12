@@ -27,10 +27,13 @@ colorama = "^0.4.6"
 primefac = "^2.0.12"
 tqdm = "^4.66.4"
 
-[tool.poetry.dev-dependencies]
-
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.0"
+pytest-benchmark = "^4.0.0"
+
+[tool.pytest.ini_options]
+addopts = "-v --capture=sys"
+
 
 [build-system]
 requires = ["poetry-core"]

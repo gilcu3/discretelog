@@ -33,7 +33,7 @@ def higher_order_test(psize, frandom):
     gr = pow(g, q * r, p)
     e = frandom.randint(1, q)
     y = pow(gr, e, p)
-    ye = linear_sieve_dlog(p, gr, y, q)
+    ye = linear_sieve_dlog(p, gr, y, q, DEBUG=True)
     assert e == ye
 
 
@@ -73,8 +73,8 @@ def test_linear_sieve_dlog_small(frandom):
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
 
-@pytest.mark.slow
-def test_linear_sieve_dlog_large(frandom):
+
+def test_linear_sieve_dlog_medium(frandom):
     ntests = 20
     print('sophie germaine primes')
     for psize in range(9, 14):
@@ -85,3 +85,17 @@ def test_linear_sieve_dlog_large(frandom):
     print('higher order')
     for _ in mrange(ntests, DEBUG=True):
         higher_order_test(5, frandom)
+
+
+@pytest.mark.slow
+def test_linear_sieve_dlog_large(frandom):
+    ntests = 1
+    print('sophie germaine primes')
+    for psize in range(27, 30):
+        print(f'psize={psize}')
+        for _ in mrange(ntests, DEBUG=True):
+            single_test(psize, frandom)
+    ntests = 1
+    print('higher order')
+    for _ in mrange(ntests, DEBUG=True):
+        higher_order_test(10, frandom)

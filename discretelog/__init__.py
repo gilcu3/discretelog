@@ -80,7 +80,7 @@ def dlog_prime_order(g, v, q, p, DEBUG=False):
     elif p <= 10 ** 14:
         # should work for powers of a prime as well
         d = pollard_rho_dlg(g, v, q, DEBUG)
-    elif q <= 10 ** 27:
+    elif q <= 10 ** 35:
         d = linear_sieve_dlog(q, g, v, p, DEBUG=DEBUG)
     else:
         assert isprime(q), f'modulus q={q} is not prime, cado-nfs requires it'

@@ -524,8 +524,8 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
                 ikmap[v] = i
 
         for i in range(n):
-            for j in range(m + np):
-                Mrels[i][j] %= opq
+            # for j in range(m + np):
+            #     Mrels[i][j] %= opq
             # swap g column to the end
             Mrels[i][m + ig], Mrels[i][-1] = Mrels[i][-1], Mrels[i][m + ig]
 
