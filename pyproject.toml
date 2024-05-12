@@ -33,7 +33,7 @@ pytest-benchmark = "^4.0.0"
 
 [tool.pytest.ini_options]
 addopts = "-v --capture=sys"
-
+filterwarnings = "ignore::pytest.PytestUnraisableExceptionWarning"
 
 [build-system]
 requires = ["poetry-core"]

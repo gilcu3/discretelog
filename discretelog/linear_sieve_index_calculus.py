@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 
 from math import isqrt, log, exp, ceil
+from os import cpu_count
 
 from primefac import isprime
 
 from .common import primitive_root, smooth_primes, factor, is_Bsmooth, \
     row_reduce, order
-from .utils import mrange
+from .utils import mrange, parallel_for_balanced
 from .block_lanczos import to_sp, block_lanczos
 
 
@@ -253,6 +254,17 @@ def linear_sieve(p, A, B,
                 yield c2, fn
 
 
+def worker_linear_sieve(queue, rc2, p, H, clog, eps, qlimit, fbq, fbqlogs):
+    for c2 in rc2:
+        A, B, climit = H + c2, H, c2+1
+        res = []
+        for c1, fn in linear_sieve(p, A, B, climit,
+                                   clog, eps, qlimit, fbq, fbqlogs):
+            res.append((c1, fn))
+        queue.put((c2, res))
+    queue.put(None)
+
+
 def sign(a):
     if a > 0:
         return 1
@@ -367,6 +379,27 @@ class CongruenceFinder:
         self.infb = []
         self.clog = []
         self.ifbq = ifbq
+        self.eps = 1e-9
+
+    def sieve_values(self, n, DEBUG=False):
+        for c2 in mrange(self.c2, self.c2 + n, DEBUG=DEBUG):
+            for c1, fn in linear_sieve(self.p, self.H + c2, self.H, c2+1,
+                                       self.clog, self.eps,
+                                       self.qlimit, self.fbq, self.fbqlogs):
+                yield c2, c1, fn
+
+    def sieve_values_parallel(self, n, DEBUG):
+        if True or (self.c2 + n) <= 1000 or cpu_count() <= 1:
+            yield from self.sieve_values(n, DEBUG)
+            return
+        rng = range(self.c2, self.c2 + n)
+        res = parallel_for_balanced(worker_linear_sieve,
+                                    (self.p, self.H, self.clog, self.eps,
+                                     self.qlimit, self.fbq, self.fbqlogs),
+                                    rng, DEBUG=DEBUG)
+        for c2 in rng:
+            for c1, fn in res[c2]:
+                yield c2, c1, fn
 
     def get(self, n, DEBUG=False):
         if DEBUG:
@@ -375,28 +408,25 @@ class CongruenceFinder:
         self.infb += [None] * n
         self.clog += [log(c) if c > 0 else 0
                       for c in range(3 * self.c2, 3 * (self.c2 + n))]
-        eps = 1e-9
-        for c2 in mrange(self.c2, self.c2 + n, DEBUG=DEBUG):
-            for c1, fn in linear_sieve(self.p, self.H + c2, self.H, c2+1,
-                                       self.clog, eps,
-                                       self.qlimit, self.fbq, self.fbqlogs):
-                if self.infb[c1] is None:
-                    self.infb[c1] = len(self.fb)
-                    self.fb += [c1]
-                if self.infb[c2] is None:
-                    self.infb[c2] = len(self.fb)
-                    self.fb += [c2]
-                cr = [0] * self.np
-                if c1 == c2:
-                    crex = [self.infb[c1]]
-                    for q, e in fn.items():
-                        cr[self.ifbq[q]] = e
-                else:
-                    for q, e in fn.items():
-                        cr[self.ifbq[q]] = 2 * e
-                    crex = [self.infb[c1], self.infb[c2]]
-                rels += [cr]
-                relsex += [crex]
+
+        for c2, c1, fn in self.sieve_values_parallel(n, DEBUG):
+            if self.infb[c1] is None:
+                self.infb[c1] = len(self.fb)
+                self.fb += [c1]
+            if self.infb[c2] is None:
+                self.infb[c2] = len(self.fb)
+                self.fb += [c2]
+            cr = [0] * self.np
+            if c1 == c2:
+                crex = [self.infb[c1]]
+                for q, e in fn.items():
+                    cr[self.ifbq[q]] = e
+            else:
+                for q, e in fn.items():
+                    cr[self.ifbq[q]] = 2 * e
+                crex = [self.infb[c1], self.infb[c2]]
+            rels += [cr]
+            relsex += [crex]
         self.c2 += n
         if DEBUG:
             print(f'resulted in {len(rels)} new rels')
