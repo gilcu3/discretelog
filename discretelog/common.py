@@ -65,11 +65,17 @@ def factor_cado_nfs(n, DEBUG=False):
     ds = mexec('cado-nfs %d' % n, DEBUG)
     ds = ds.split('\n')[-1]
     ps = list(map(int, ds.split()))
-    return ps
+    nn = n
+    pss = []
+    for p in ps:
+        while nn % p == 0:
+            nn //= p
+            pss += [p]
+    return pss
 
 
-def factor_yafu(n):
-    f = mexec('yafu %d' % n)
+def factor_yafu(n, DEBUG=False):
+    f = mexec('yafu %d' % n, DEBUG=DEBUG)
     op = False
     ps = []
     for line in f.split('\n'):
@@ -94,9 +100,9 @@ def factor(n, DEBUG=False):
         if n <= 10 ** 20:
             ps = list(primefac(n, verbose=DEBUG))
         elif n <= 10 ** 100:
-            ps = factor_yafu(n)
+            ps = factor_yafu(n, DEBUG=DEBUG)
         else:
-            ps = factor_cado_nfs(n)
+            ps = factor_cado_nfs(n, DEBUG=DEBUG)
         for p in ps:
             if p in f:
                 f[p] += 1
