@@ -74,8 +74,9 @@ def factor_cado_nfs(n, DEBUG=False):
     return pss
 
 
-def factor_yafu(n, DEBUG=False):
-    f = mexec('yafu %d' % n, DEBUG=DEBUG)
+def factor_yafu(n, pretest=False, DEBUG=False):
+    pretest_opt = ' -pretest 20' if pretest else ''
+    f = mexec('yafu%s %d' % (pretest_opt, n), DEBUG=DEBUG)
     op = False
     ps = []
     for line in f.split('\n'):
@@ -99,10 +100,31 @@ def factor(n, DEBUG=False):
         f = {}
         if n <= 10 ** 20:
             ps = list(primefac(n, verbose=DEBUG))
-        elif n <= 10 ** 100:
-            ps = factor_yafu(n, DEBUG=DEBUG)
         else:
-            ps = factor_cado_nfs(n, DEBUG=DEBUG)
+            ps = []
+            try:
+                for p in primefac(n, verbose=True, trial=10**4, rho=2 * 10**5,
+                                  methods=tuple()):
+                    if isprime(p):
+                        n //= p
+                        ps += [p]
+                    else:
+                        break
+            except AssertionError:
+                pass
+            if n > 1:
+                for p in factor_yafu(n, pretest=True, DEBUG=DEBUG):
+                    if isprime(p):
+                        n //= p
+                        ps += [p]
+                    else:
+                        break
+                if n > 1:
+                    # This is a hard to factor number
+                    if n <= 10 ** 100:
+                        ps += factor_yafu(n, DEBUG=DEBUG)
+                    else:
+                        ps += factor_cado_nfs(n, DEBUG=DEBUG)
         for p in ps:
             if p in f:
                 f[p] += 1
