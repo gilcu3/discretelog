@@ -20,7 +20,7 @@ def producttree(X):
 def remaindersusingproducttree(n, T):
     result = [n]
     for t in reversed(T):
-        result = [result[i//2] % t[i] for i in range(len(t))]
+        result = [result[i // 2] % t[i] for i in range(len(t))]
     return result
 
 
@@ -127,7 +127,7 @@ def check_dlogs(g, p, q, exponents, bases):
 def msolve_prime(M, q, DEBUG=False):
     if DEBUG:
         print(f'solving linear system {len(M)}x{len(M[0])}')
-    n = len(M[0])-1
+    n = len(M[0]) - 1
     m = modMatrix(M, q)
     if not row_reduce(m, q):
         return None
@@ -136,12 +136,12 @@ def msolve_prime(M, q, DEBUG=False):
 
 def dlog_prime(b, h, p, DEBUG=False):
     if p <= 10 ** 5:
-        assert False, f'{p} is too small'
+        raise AssertionError(f'{p} is too small')
     q = multiplicative_order(b, p)
     assert isprime(q)
     o = phi(p)
     g = primitive_root(p)
-    B = int(4 * exp(sqrt(log(p) * log(log(p)))/2)) + 10
+    B = int(4 * exp(sqrt(log(p) * log(log(p))) / 2)) + 10
     if DEBUG:
         print("p: {}, b: {}, h: {}, B: {}".format(p, b, h, B))
     congs = []

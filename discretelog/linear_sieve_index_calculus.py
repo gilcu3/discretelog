@@ -134,7 +134,7 @@ def structured_gaussian_elimination(rels, relsex, k):
                 w = len([v for v in rels[i] if v != 0])
                 rw += [(w, i)]
         rw.sort()
-        for w, i in reversed(rw):
+        for _w, i in reversed(rw):
             rn -= 1
             marked[i] = True
             if rn <= kp * extrarels:
@@ -163,7 +163,7 @@ def rels_filter(rels, relsex, k):
     well_connected(k, graph, degc)
     n = len(rels)
     marked = [False] * n
-    for i, (cr, crex) in enumerate(zip(rels, relsex)):
+    for i, (_cr, crex) in enumerate(zip(rels, relsex)):
         pos = False
         for c in crex:
             if degc[c] <= 1:
@@ -256,7 +256,7 @@ def linear_sieve(p, A, B,
 
 def worker_linear_sieve(queue, rc2, p, H, clog, eps, qlimit, fbq, fbqlogs):
     for c2 in rc2:
-        A, B, climit = H + c2, H, c2+1
+        A, B, climit = H + c2, H, c2 + 1
         res = []
         for c1, fn in linear_sieve(p, A, B, climit,
                                    clog, eps, qlimit, fbq, fbqlogs):
@@ -318,7 +318,7 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
     if DEBUG:
         print(f'individual log: y={y} g={g} op={op}')
     assert pow(y, op, p) == 1
-    U = L(p, 2/3, 3 ** (-1/3))
+    U = L(p, 2 / 3, 3 ** (-1 / 3))
     H = isqrt(p) + 1
 
     yy = y
@@ -383,7 +383,7 @@ class CongruenceFinder:
 
     def sieve_values(self, n, DEBUG=False):
         for c2 in mrange(self.c2, self.c2 + n, DEBUG=DEBUG):
-            for c1, fn in linear_sieve(self.p, self.H + c2, self.H, c2+1,
+            for c1, fn in linear_sieve(self.p, self.H + c2, self.H, c2 + 1,
                                        self.clog, self.eps,
                                        self.qlimit, self.fbq, self.fbqlogs):
                 yield c2, c1, fn
@@ -403,7 +403,7 @@ class CongruenceFinder:
 
     def get(self, n, DEBUG=False):
         if DEBUG:
-            print(f'Searching congruences in range {self.c2}-{self.c2+n}')
+            print(f'Searching congruences in range {self.c2}-{self.c2 + n}')
         rels, relsex = [], []
         self.infb += [None] * n
         self.clog += [log(c) if c > 0 else 0
@@ -514,7 +514,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         if rounds > 10:
             if DEBUG:
                 print('solution not converging, trying higher qlimit')
-            return linear_sieve_dlog(p, gy, y, op, qlimit+50, climit, DEBUG)
+            return linear_sieve_dlog(p, gy, y, op, qlimit + 50, climit, DEBUG)
         nclimit = climit if first else max(50, climit // 10)
         if DEBUG:
             print(f'\nSolving: p={p} gy={gy} y={y} fbp={len(fbq)}',
@@ -575,7 +575,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         exps[g] = 1
         Hexps = [None] * climit
         solved = True
-        for i in range(m + np-1):
+        for i in range(m + np - 1):
             if x[i] is not None:
                 if i < m:
                     v = iinfb[ikmap[i]]
@@ -600,8 +600,8 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
                                 other = Hexps[iinfb[c]]
                         v = iinfb[unknown[0]]
                         pf = {fbq[j]: rel[j] for j in range(np) if rel[j] != 0}
-                        Hexps[v] = (compute_dlog(exps, pf, opq) *
-                                    (opq + 1) // 2 - other) % opq
+                        Hexps[v] = (compute_dlog(exps, pf, opq)
+                                    * (opq + 1) // 2 - other) % opq
         if DEBUG:
             if not solved:
                 print(f'more relations required {len(exps)}/{np}')

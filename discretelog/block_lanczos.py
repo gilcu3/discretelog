@@ -38,7 +38,7 @@ def spmax(mat):
     mx = 0
     for i in range(len(mat)):
         c1, c2 = 0, 0
-        for j, v in mat[i]:
+        for _, v in mat[i]:
             if v > 0:
                 c1 += v
             else:

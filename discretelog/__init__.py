@@ -44,7 +44,7 @@ def pollard_rho_dlg(g, v, q, DEBUG=False):
     sn = 4 * isqrt(int(pi * n / 8))
     x, a, b = 1, 0, 0
     X, A, B = x, a, b
-    for i in mrange(1, sn, DEBUG=DEBUG):
+    for _ in mrange(1, sn, DEBUG=DEBUG):
         x, a, b = new_xab[x % 3](x, a, b)
         X, A, B = new_xab[X % 3](X, A, B)
         X, A, B = new_xab[X % 3](X, A, B)
@@ -103,7 +103,7 @@ def dlog_prime_power_order(g, h, q, p, e, DEBUG=False):
         x = 0
         pk = pe // p
         gamma = pow(g, pk, q)
-        for k in range(e):
+        for _ in range(e):
             hk = pow(pow(g, -x, q) * h, pk, q)
             dk = dlog_prime_order(gamma, hk, q, p, DEBUG)
             x = (x + pe // pk // p * dk) % pe
