@@ -74,6 +74,7 @@ def test_linear_sieve_dlog_small(frandom):
             single_test(psize, frandom)
 
 
+@pytest.mark.slow
 def test_linear_sieve_dlog_medium(frandom):
     ntests = 100
     print('sophie germaine primes')

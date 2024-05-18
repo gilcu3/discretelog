@@ -31,6 +31,18 @@ tqdm = "^4.66.4"
 pytest = "^8.2.0"
 pytest-benchmark = "^4.0.0"
 
+
+[tool.poetry.group.dev.dependencies]
+coverage = {extras = ["toml"], version = "^7.5.1"}
+
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*"]
+[tool.coverage.report]
+omit = ["tests/*"]
+fail_under = 100
+
+
+
 [tool.pytest.ini_options]
 addopts = "-v --capture=sys"
 filterwarnings = "ignore::pytest.PytestUnraisableExceptionWarning"
