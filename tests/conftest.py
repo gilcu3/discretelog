@@ -9,8 +9,7 @@ def pytest_addoption(parser):
         "--slow", action="store_true", default=False, help="run slow tests"
     )
     parser.addoption(
-        "--perf", action="store_true", default=False,
-        help="run performance tests"
+        "--perf", action="store_true", default=False, help="run performance tests"
     )
 
 

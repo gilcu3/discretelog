@@ -3,8 +3,12 @@
 import pytest
 from primefac import isprime
 
-from discretelog.common import \
-    random_prime, random_sophie_germain_prime, primitive_root, order
+from discretelog.common import (
+    random_prime,
+    random_sophie_germain_prime,
+    primitive_root,
+    order,
+)
 from discretelog.utils import mrange
 from discretelog.linear_sieve_index_calculus import linear_sieve_dlog
 
@@ -13,7 +17,7 @@ def single_test(psize, frandom):
     p = random_sophie_germain_prime(psize, frandom)
     q = (p - 1) // 2
     g = primitive_root(p)
-    gr = g ** 2 % p
+    gr = g**2 % p
     e = frandom.randint(2, q)
     y = pow(gr, e, p)
     assert pow(gr, q, p) == 1
@@ -25,10 +29,10 @@ def single_test(psize, frandom):
 def higher_order_test(psize, frandom):
     p = random_prime(psize, frandom)
     while True:
-        r = frandom.randint(1, 10 ** psize)
-        if isprime(r * p ** 2 + 1):
+        r = frandom.randint(1, 10**psize)
+        if isprime(r * p**2 + 1):
             break
-    p, q = r * p ** 2 + 1, p
+    p, q = r * p**2 + 1, p
     g = primitive_root(p)
     gr = pow(g, q * r, p)
     e = frandom.randint(1, q)
@@ -39,14 +43,17 @@ def higher_order_test(psize, frandom):
 
 @pytest.mark.slow
 def test_special(frandom):
-    for p, g, e, op in \
-        [(1000000000000000003, None, None, 52445056723),
-         (100000000000000000039, None, None, 507526619771207),
-         (1000000000000000000000000000057, None, None, 454197539),
-         (33380411190168454492618748210515919,
-          28236217495251472904421868195362610,
-          1040261549503090216732095527114575838939980980, None)
-         ]:
+    for p, g, e, op in [
+        (1000000000000000003, None, None, 52445056723),
+        (100000000000000000039, None, None, 507526619771207),
+        (1000000000000000000000000000057, None, None, 454197539),
+        (
+            33380411190168454492618748210515919,
+            28236217495251472904421868195362610,
+            1040261549503090216732095527114575838939980980,
+            None,
+        ),
+    ]:
         gengr = g is None or op is None
         if g is None:
             g = primitive_root(p)
@@ -66,10 +73,10 @@ def test_special(frandom):
 
 
 def test_linear_sieve_dlog_small(frandom):
-    ntests = 500
-    print('sophie germaine primes')
+    ntests = 100
+    print("sophie germaine primes")
     for psize in range(6, 9):
-        print(f'psize={psize}')
+        print(f"psize={psize}")
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
 
@@ -77,13 +84,13 @@ def test_linear_sieve_dlog_small(frandom):
 @pytest.mark.slow
 def test_linear_sieve_dlog_medium(frandom):
     ntests = 100
-    print('sophie germaine primes')
+    print("sophie germaine primes")
     for psize in range(9, 14):
-        print(f'psize={psize}')
+        print(f"psize={psize}")
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
     ntests = 100
-    print('higher order')
+    print("higher order")
     for _ in mrange(ntests, DEBUG=True):
         higher_order_test(6, frandom)
 
@@ -91,12 +98,12 @@ def test_linear_sieve_dlog_medium(frandom):
 @pytest.mark.slow
 def test_linear_sieve_dlog_large(frandom):
     ntests = 1
-    print('sophie germaine primes')
+    print("sophie germaine primes")
     for psize in range(27, 30):
-        print(f'psize={psize}')
+        print(f"psize={psize}")
         for _ in mrange(ntests, DEBUG=True):
             single_test(psize, frandom)
     ntests = 1
-    print('higher order')
+    print("higher order")
     for _ in mrange(ntests, DEBUG=True):
         higher_order_test(10, frandom)

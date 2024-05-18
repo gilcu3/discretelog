@@ -2,8 +2,7 @@
 
 import pytest
 
-from discretelog.common import \
-    random_sophie_germain_prime, primitive_root
+from discretelog.common import random_sophie_germain_prime, primitive_root
 from discretelog.utils import mrange
 from discretelog.naive_index_calculus import dlog_prime
 
@@ -19,8 +18,7 @@ def single_test(psize, random):
 
 @pytest.mark.slow
 def test_dlog_prime_special():
-    tests = [(1540571422742786915303, 25,
-             690483026481419643586, 641629670911834423534)]
+    tests = [(1540571422742786915303, 25, 690483026481419643586, 641629670911834423534)]
     for p, b, e, h in tests:
         assert dlog_prime(b, h, p, True) == e
 

@@ -32,14 +32,14 @@ def baby_steps_giant_steps(g, v, q):
 
 def pollard_rho_dlg(g, v, q, DEBUG=False):
     if DEBUG:
-        print(f'pollard_rho_dlg: g={g} v={v} q={q}')
+        print(f"pollard_rho_dlg: g={g} v={v} q={q}")
     if g == v:
         return 1
     n = order(g, q)
     new_xab = [
         lambda x, a, b: (x * x % q, a * 2 % n, b * 2 % n),
         lambda x, a, b: (x * g % q, (a + 1) % n, b),
-        lambda x, a, b: (x * v % q, a, (b + 1) % n)
+        lambda x, a, b: (x * v % q, a, (b + 1) % n),
     ]
     sn = 4 * isqrt(int(pi * n / 8))
     x, a, b = 1, 0, 0
@@ -54,43 +54,43 @@ def pollard_rho_dlg(g, v, q, DEBUG=False):
     for d in solve_congruence((B - b) % n, (a - A) % n, n):
         if pow(g, d, q) == v:
             if DEBUG:
-                print(f'discrete log: d={d}')
+                print(f"discrete log: d={d}")
             return d
 
     if DEBUG:
         # Consequence of this bad case
         # 345259615358946849545 720882080607834014753 1097036420717452490927
-        print('Falling back to baby steps giant steps')
+        print("Falling back to baby steps giant steps")
     d = baby_steps_giant_steps(g, v, q)
-    assert pow(g, d, q) == v, f'pollard_rho_dlg failed g={g} v={v} q={q}'
+    assert pow(g, d, q) == v, f"pollard_rho_dlg failed g={g} v={v} q={q}"
     return d
 
 
 def dlog_cado_nfs(p, g, v, q, DEBUG=False):
-    ds = mexec('cado-nfs -dlp -ell %d target=%d,%d %d' % (p, g, v, q), DEBUG)
-    ds = ds.split('\n')[-1]
-    dg, dv = tuple(map(int, ds.split(',')))
+    ds = mexec("cado-nfs -dlp -ell %d target=%d,%d %d" % (p, g, v, q), DEBUG)
+    ds = ds.split("\n")[-1]
+    dg, dv = tuple(map(int, ds.split(",")))
     d = dv * pow(dg, -1, p) % p
     return d
 
 
 def dlog_prime_order(g, v, q, p, DEBUG=False):
-    if p <= 10 ** 10:
+    if p <= 10**10:
         d = baby_steps_giant_steps(g, v, q)
-    elif p <= 10 ** 14:
+    elif p <= 10**14:
         # should work for powers of a prime as well
         d = pollard_rho_dlg(g, v, q, DEBUG)
-    elif q <= 10 ** 35:
+    elif q <= 10**35:
         d = linear_sieve_dlog(q, g, v, p, DEBUG=DEBUG)
     else:
-        assert isprime(q), f'modulus q={q} is not prime, cado-nfs requires it'
+        assert isprime(q), f"modulus q={q} is not prime, cado-nfs requires it"
 
         # this should never fail
-        assert isprime(p), f'order p={p} is not prime, cado-nfs requires it'
+        assert isprime(p), f"order p={p} is not prime, cado-nfs requires it"
 
         d = dlog_cado_nfs(p, g, v, q, DEBUG)
 
-    assert pow(g, d, q) == v % q, 'discrete log cyclic %d is incorrect' % d
+    assert pow(g, d, q) == v % q, "discrete log cyclic %d is incorrect" % d
 
     return d
 
@@ -99,7 +99,7 @@ def dlog_prime_power_order(g, h, q, p, e, DEBUG=False):
     if e == 1:
         return dlog_prime_order(g, h, q, p, DEBUG)
     else:
-        pe = p ** e
+        pe = p**e
         x = 0
         pk = pe // p
         gamma = pow(g, pk, q)
@@ -108,7 +108,7 @@ def dlog_prime_power_order(g, h, q, p, e, DEBUG=False):
             dk = dlog_prime_order(gamma, hk, q, p, DEBUG)
             x = (x + pe // pk // p * dk) % pe
             pk //= p
-        assert pow(g, x, q) == h % q, f'dlog prime power order x={x} failed'
+        assert pow(g, x, q) == h % q, f"dlog prime power order x={x} failed"
         return x
 
 
@@ -122,25 +122,23 @@ def pohlig_hellman(g, v, q, DEBUG=False):
     else:
         congs = []
         for p, e in fd.items():
-            pi = p ** e
+            pi = p**e
             gi = pow(g, d // pi, q)
             vi = pow(v, d // pi, q)
             xi = dlog_prime_power_order(gi, vi, q, p, e, DEBUG)
             congs += [(xi, pi)]
         x, _ = crt(congs)
-    assert pow(g, x, q) == v, \
-        f'pohlig hellman failed: g={g} v={v} d={d} x={x} q={q}'
+    assert pow(g, x, q) == v, f"pohlig hellman failed: g={g} v={v} d={d} x={x} q={q}"
     return x
 
 
 def dlog_prime_power(g, v, p, e, DEBUG=False):
 
-    q = p ** e
+    q = p**e
     o = order(g, q)
-    assert pow(v, o, q) == 1, \
-        '%d is not in the subgroup of %d mod %d' % (v, g, q)
+    assert pow(v, o, q) == 1, "%d is not in the subgroup of %d mod %d" % (v, g, q)
 
-    if q <= 10 ** 10:
+    if q <= 10**10:
 
         d = baby_steps_giant_steps(g, v, q)
 
@@ -148,13 +146,12 @@ def dlog_prime_power(g, v, p, e, DEBUG=False):
 
         d = pohlig_hellman(g, v, q, DEBUG)
 
-    assert pow(g, d, q) == v, \
-        'discrete log prime power %d is incorrect' % d
+    assert pow(g, d, q) == v, "discrete log prime power %d is incorrect" % d
     return d, o
 
 
 def dlog_non_relative_prime(g, v, p, e):
-    q = p ** e
+    q = p**e
     if g == 0 and v == 0:
         return 1, 1
 
@@ -176,7 +173,7 @@ def dlog(g, v, n, DEBUG=False):
 
     for p, e in fn.items():
         if g % p == 0:
-            q = p ** e
+            q = p**e
             gi, vi = g % q, v % q
             xi, ti = dlog_non_relative_prime(gi, vi, p, e)
             if ct is None:
@@ -203,7 +200,7 @@ def dlog(g, v, n, DEBUG=False):
 
     for p, e in fn.items():
         if g % p != 0:
-            pi = p ** e
+            pi = p**e
             gi = g % pi
             vi = v % pi
             if gi == 1:
@@ -221,5 +218,5 @@ def dlog(g, v, n, DEBUG=False):
         if d < c:
             d = d + m * ((c - d + m - 1) // m)
 
-    assert pow(g, d, n) == v, 'discrete log %d is incorrect' % d
+    assert pow(g, d, n) == v, "discrete log %d is incorrect" % d
     return d, dt

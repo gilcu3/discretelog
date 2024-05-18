@@ -4,15 +4,21 @@ from math import sqrt, exp, log, prod
 from primefac import isprime
 from tqdm import tqdm
 
-from .common import is_Bsmooth, smooth_primes, phi, primitive_root, \
-    multiplicative_order, row_reduce
+from .common import (
+    is_Bsmooth,
+    smooth_primes,
+    phi,
+    primitive_root,
+    multiplicative_order,
+    row_reduce,
+)
 from .utils import mrange
 
 
 def producttree(X):
     result = [X]
     while len(X) > 1:
-        X = [prod(X[i * 2: (i + 1) * 2]) for i in range((len(X) + 1) // 2)]
+        X = [prod(X[i * 2 : (i + 1) * 2]) for i in range((len(X) + 1) // 2)]
         result.append(X)
     return result
 
@@ -57,7 +63,7 @@ class CongruenceFinder:
 
     def get(self, n, DEBUG=False):
         if DEBUG:
-            print(f'Searching {n} congruences')
+            print(f"Searching {n} congruences")
         batch_size = self.B * 4
         z = berstein_prec(self.B)
         if DEBUG:
@@ -77,13 +83,15 @@ class CongruenceFinder:
             pbar.close()
         bases = list(set(base for c in self.congs for base in c[0]))
         if DEBUG:
-            print(f'resulted in bases: {len(bases)}')
+            print(f"resulted in bases: {len(bases)}")
         return bases, self.congs
 
 
 def to_matrices(bases, congruences):
-    M = [[c[0][base] if base in c[0] else 0 for base in bases] + [c[1]]
-         for c in congruences]
+    M = [
+        [c[0][base] if base in c[0] else 0 for base in bases] + [c[1]]
+        for c in congruences
+    ]
     return M
 
 
@@ -126,7 +134,7 @@ def check_dlogs(g, p, q, exponents, bases):
 
 def msolve_prime(M, q, DEBUG=False):
     if DEBUG:
-        print(f'solving linear system {len(M)}x{len(M[0])}')
+        print(f"solving linear system {len(M)}x{len(M[0])}")
     n = len(M[0]) - 1
     m = modMatrix(M, q)
     if not row_reduce(m, q):
@@ -135,8 +143,8 @@ def msolve_prime(M, q, DEBUG=False):
 
 
 def dlog_prime(b, h, p, DEBUG=False):
-    if p <= 10 ** 5:
-        raise AssertionError(f'{p} is too small')
+    if p <= 10**5:
+        raise AssertionError(f"{p} is too small")
     q = multiplicative_order(b, p)
     assert isprime(q)
     o = phi(p)
@@ -163,8 +171,8 @@ def dlog_prime(b, h, p, DEBUG=False):
 
     def find_log_g(x):
         if DEBUG:
-            print(f'searching for k such that {x}*g^-k is B-smooth.')
-        for k in mrange(1, 10 ** 7, 1, DEBUG):
+            print(f"searching for k such that {x}*g^-k is B-smooth.")
+        for k in mrange(1, 10**7, 1, DEBUG):
             c = is_Bsmooth(B, x * pow(g, -k, p) % p)
             if c[0] and set(c[1].keys()).issubset(set(dlogs.keys())):
                 if DEBUG:
@@ -173,9 +181,10 @@ def dlog_prime(b, h, p, DEBUG=False):
 
         xe = (evaluate(c[1], dlogs, q) + k) % q
         if DEBUG:
-            print(f'Found partial dlog: {g}^{xe}={x} mod {p} mod {q}')
+            print(f"Found partial dlog: {g}^{xe}={x} mod {p} mod {q}")
         assert pow(g, xe * o // q, p) == pow(x, o // q, p)
         return xe
+
     be = find_log_g(b)
     he = find_log_g(h)
 

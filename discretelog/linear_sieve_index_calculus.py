@@ -5,14 +5,13 @@ from os import cpu_count
 
 from primefac import isprime
 
-from .common import primitive_root, smooth_primes, factor, is_Bsmooth, \
-    row_reduce, order
+from .common import primitive_root, smooth_primes, factor, is_Bsmooth, row_reduce, order
 from .utils import mrange, parallel_for_balanced
 from .block_lanczos import to_sp, block_lanczos
 
 
 def L(p, alpha, c):
-    return int(exp(c * log(p)**alpha * log(log(p)) ** (1 - alpha)))
+    return int(exp(c * log(p) ** alpha * log(log(p)) ** (1 - alpha)))
 
 
 def inverse_seq(x, q):
@@ -200,8 +199,8 @@ def rels_matrix(rels, relsex, k, rf, DEBUG=False):
                 cur[kmap[v]] = -2
             nrels += [cur]
     if DEBUG:
-        print(f'system sparsity: {sparsity / len(nrels)}')
-        print(f'max absolute value: {mx}')
+        print(f"system sparsity: {sparsity / len(nrels)}")
+        print(f"max absolute value: {mx}")
     return nrels, kmap
 
 
@@ -209,9 +208,9 @@ def compute_dlog(dlogs, pf, p):
     return sum([dlogs[q] * e for q, e in pf.items()]) % p
 
 
-def linear_sieve(p, A, B,
-                 climit=None, clog=None, eps=None,
-                 qlimit=None, fbq=None, fbqlogs=None):
+def linear_sieve(
+    p, A, B, climit=None, clog=None, eps=None, qlimit=None, fbq=None, fbqlogs=None
+):
     if climit is None:
         climit = default_climit(p)
     M = A * B // p
@@ -258,8 +257,7 @@ def worker_linear_sieve(queue, rc2, p, H, clog, eps, qlimit, fbq, fbqlogs):
     for c2 in rc2:
         A, B, climit = H + c2, H, c2 + 1
         res = []
-        for c1, fn in linear_sieve(p, A, B, climit,
-                                   clog, eps, qlimit, fbq, fbqlogs):
+        for c1, fn in linear_sieve(p, A, B, climit, clog, eps, qlimit, fbq, fbqlogs):
             res.append((c1, fn))
         queue.put((c2, res))
     queue.put(None)
@@ -291,7 +289,7 @@ def ratlift(u, bnd, m):
 
 def individual_logs(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
     yy = y
-    inf = min(op, 2 ** 31)
+    inf = min(op, 2**31)
     bound = isqrt(p) + 1
     for w in mrange(1, inf, DEBUG=DEBUG):
         yy = yy * g % p
@@ -316,14 +314,14 @@ def individual_logs(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
 def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
     # this would require ecm factoring to be efficient
     if DEBUG:
-        print(f'individual log: y={y} g={g} op={op}')
+        print(f"individual log: y={y} g={g} op={op}")
     assert pow(y, op, p) == 1
     U = L(p, 2 / 3, 3 ** (-1 / 3))
     H = isqrt(p) + 1
 
     yy = y
     gr = pow(g, (p - 1) // op, p)
-    inf = min(op, 2 ** 31)  # tqdm not able to handle bigger numbers
+    inf = min(op, 2**31)  # tqdm not able to handle bigger numbers
     for w in mrange(1, inf, DEBUG=DEBUG):
         yy = yy * g % p
         fy = factor(yy)
@@ -336,7 +334,7 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
                 else:
                     lowu = ceil(H / qq)
                     found = False
-                    for u, uf in linear_sieve(p, 1, lowu, climit ** 2):
+                    for u, uf in linear_sieve(p, 1, lowu, climit**2):
                         u += lowu
                         for v, nf in linear_sieve(p, u * qq % p, H, climit):
                             if Hlogs[v] is not None:
@@ -356,7 +354,7 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
             # this may not be possible, not sure what could be done
             ye = ye * pow((p - 1) // op, -1, op) % op
             if DEBUG:
-                print(f'found log_{gr}({y}) = {ye}')
+                print(f"found log_{gr}({y}) = {ye}")
             assert pow(gr, ye, p) == y
             return ye
 
@@ -383,9 +381,17 @@ class CongruenceFinder:
 
     def sieve_values(self, n, DEBUG=False):
         for c2 in mrange(self.c2, self.c2 + n, DEBUG=DEBUG):
-            for c1, fn in linear_sieve(self.p, self.H + c2, self.H, c2 + 1,
-                                       self.clog, self.eps,
-                                       self.qlimit, self.fbq, self.fbqlogs):
+            for c1, fn in linear_sieve(
+                self.p,
+                self.H + c2,
+                self.H,
+                c2 + 1,
+                self.clog,
+                self.eps,
+                self.qlimit,
+                self.fbq,
+                self.fbqlogs,
+            ):
                 yield c2, c1, fn
 
     def sieve_values_parallel(self, n, DEBUG):
@@ -393,21 +399,24 @@ class CongruenceFinder:
             yield from self.sieve_values(n, DEBUG)
             return
         rng = range(self.c2, self.c2 + n)
-        res = parallel_for_balanced(worker_linear_sieve,
-                                    (self.p, self.H, self.clog, self.eps,
-                                     self.qlimit, self.fbq, self.fbqlogs),
-                                    rng, DEBUG=DEBUG)
+        res = parallel_for_balanced(
+            worker_linear_sieve,
+            (self.p, self.H, self.clog, self.eps, self.qlimit, self.fbq, self.fbqlogs),
+            rng,
+            DEBUG=DEBUG,
+        )
         for c2 in rng:
             for c1, fn in res[c2]:
                 yield c2, c1, fn
 
     def get(self, n, DEBUG=False):
         if DEBUG:
-            print(f'Searching congruences in range {self.c2}-{self.c2 + n}')
+            print(f"Searching congruences in range {self.c2}-{self.c2 + n}")
         rels, relsex = [], []
         self.infb += [None] * n
-        self.clog += [log(c) if c > 0 else 0
-                      for c in range(3 * self.c2, 3 * (self.c2 + n))]
+        self.clog += [
+            log(c) if c > 0 else 0 for c in range(3 * self.c2, 3 * (self.c2 + n))
+        ]
 
         for c2, c1, fn in self.sieve_values_parallel(n, DEBUG):
             if self.infb[c1] is None:
@@ -429,7 +438,7 @@ class CongruenceFinder:
             relsex += [crex]
         self.c2 += n
         if DEBUG:
-            print(f'resulted in {len(rels)} new rels')
+            print(f"resulted in {len(rels)} new rels")
         return rels, relsex
 
 
@@ -457,13 +466,13 @@ def solve_lanczos(M, q, DEBUG=False):
 
 def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
     if DEBUG:
-        print(f'linear sieve dlog: p={p} gy={gy} y={y}')
+        print(f"linear sieve dlog: p={p} gy={gy} y={y}")
     assert isprime(p)
     if op is None:
         op = order(gy, p)
     assert isprime(op)
     assert (p - 1) % op == 0
-    assert op >= 10 ** 6
+    assert op >= 10**6
     assert order(gy, p) == op
     opq = op
     while (p - 1) % (opq * op) == 0:
@@ -513,13 +522,15 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         rounds += 1
         if rounds > 10:
             if DEBUG:
-                print('solution not converging, trying higher qlimit')
+                print("solution not converging, trying higher qlimit")
             return linear_sieve_dlog(p, gy, y, op, qlimit + 50, climit, DEBUG)
         nclimit = climit if first else max(50, climit // 10)
         if DEBUG:
-            print(f'\nSolving: p={p} gy={gy} y={y} fbp={len(fbq)}',
-                  f'qlimit={qlimit}',
-                  f'climit={climit + (0 if nclimit == climit else nclimit)}')
+            print(
+                f"\nSolving: p={p} gy={gy} y={y} fbp={len(fbq)}",
+                f"qlimit={qlimit}",
+                f"climit={climit + (0 if nclimit == climit else nclimit)}",
+            )
         nrels, nrelsex = CF.get(nclimit, DEBUG)
         rels += nrels
         relsex += nrelsex
@@ -535,7 +546,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         if n < m + 1:
             continue
         if DEBUG:
-            print(f'n={n} relations with m={m} variables')
+            print(f"n={n} relations with m={m} variables")
 
         rf = structured_gaussian_elimination(rels, relsex, len(CF.fb))
         mod_matrix(rels, opq)
@@ -545,7 +556,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
             continue
         n, m = len(Mrels), len(Mrels[0]) - np
         if DEBUG:
-            print(f'filtered: n={n} relations with m={m + np} variables')
+            print(f"filtered: n={n} relations with m={m + np} variables")
         if len(Mrels) < len(Mrels[0]) + 1:
             continue
         ikmap = [None] * (len(Mrels[0]) - np)
@@ -600,11 +611,12 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
                                 other = Hexps[iinfb[c]]
                         v = iinfb[unknown[0]]
                         pf = {fbq[j]: rel[j] for j in range(np) if rel[j] != 0}
-                        Hexps[v] = (compute_dlog(exps, pf, opq)
-                                    * (opq + 1) // 2 - other) % opq
+                        Hexps[v] = (
+                            compute_dlog(exps, pf, opq) * (opq + 1) // 2 - other
+                        ) % opq
         if DEBUG:
             if not solved:
-                print(f'more relations required {len(exps)}/{np}')
+                print(f"more relations required {len(exps)}/{np}")
 
     for q, e in exps.items():
         assert pow(gr, e, p) == pow(q, (p - 1) // opq, p)
@@ -615,16 +627,15 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
             assert pow(gr, e, p) == pow(H + v, (p - 1) // opq, p)
 
     if DEBUG:
-        print(f'{len(exps)}/{np} discrete logs found')
-        print(f'H {Hlogs}/{climit} logs found')
+        print(f"{len(exps)}/{np} discrete logs found")
+        print(f"H {Hlogs}/{climit} logs found")
 
     xlogs = []
     for x in [gy, y]:
-        xe = individual_logs(exps, Hexps, x, g, p, opq,
-                             qlimit, climit, DEBUG=DEBUG)
+        xe = individual_logs(exps, Hexps, x, g, p, opq, qlimit, climit, DEBUG=DEBUG)
         if opq != op:
             assert xe % (opq // op) == 0
-            xe //= (opq // op)
+            xe //= opq // op
             assert pow(g, (p - 1) // op * xe, p) == x
         xlogs += [xe]
     ye = xlogs[1] * pow(xlogs[0], -1, op) % op

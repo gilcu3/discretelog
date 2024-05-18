@@ -104,12 +104,12 @@ def matmul_choice(q, m, DEBUG=False):
     # In my tests spmul2 with integer unpacked works better using pypy3 for
     # bigger numbers, which probably should not be the case
 
-    is_pypy = 'PyPy' in sys.version
+    is_pypy = "PyPy" in sys.version
     if is_pypy:
         mx = spmax(m)
         if q.bit_length() + mx.bit_length() > 70 and mx.bit_length() <= 15:
             if DEBUG:
-                print(f'Using packed matmul for m with mx={mx.bit_length()}')
+                print(f"Using packed matmul for m with mx={mx.bit_length()}")
             return partial(spmul2, mx)
     return spmul
 

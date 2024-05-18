@@ -12,7 +12,7 @@ from .utils import mexec, mrange
 def perfect_power(n):
     for e in range(2, int(log2(n)) + 1):
         r = round(n ** (1 / e))
-        if r ** e == n:
+        if r**e == n:
             return r, e
     return n, 1
 
@@ -62,8 +62,8 @@ def crt(rm):
 
 
 def factor_cado_nfs(n, DEBUG=False):
-    ds = mexec('cado-nfs %d' % n, DEBUG)
-    ds = ds.split('\n')[-1]
+    ds = mexec("cado-nfs %d" % n, DEBUG)
+    ds = ds.split("\n")[-1]
     ps = list(map(int, ds.split()))
     nn = n
     pss = []
@@ -75,17 +75,17 @@ def factor_cado_nfs(n, DEBUG=False):
 
 
 def factor_yafu(n, pretest=False, DEBUG=False):
-    pretest_opt = ' -pretest 20' if pretest else ''
-    f = mexec('yafu%s %d' % (pretest_opt, n), DEBUG=DEBUG)
+    pretest_opt = " -pretest 20" if pretest else ""
+    f = mexec("yafu%s %d" % (pretest_opt, n), DEBUG=DEBUG)
     op = False
     ps = []
-    for line in f.split('\n'):
-        if line.startswith('***factors found***'):
+    for line in f.split("\n"):
+        if line.startswith("***factors found***"):
             op = True
-        if op and line.startswith('P'):
+        if op and line.startswith("P"):
             p = int(line.split()[-1])
             ps += [p]
-        if op and line.startswith('ans'):
+        if op and line.startswith("ans"):
             break
     return ps
 
@@ -93,18 +93,19 @@ def factor_yafu(n, pretest=False, DEBUG=False):
 @cache
 def factor(n, DEBUG=False):
     if DEBUG:
-        print(f'factor: n={n}')
+        print(f"factor: n={n}")
     if isprime(n):
         f = {n: 1}
     else:
         f = {}
-        if n <= 10 ** 20:
+        if n <= 10**20:
             ps = list(primefac(n, verbose=DEBUG))
         else:
             ps = []
             try:
-                for p in primefac(n, trial=10**4, rho=2 * 10**5,
-                                  methods=None, verbose=DEBUG):
+                for p in primefac(
+                    n, trial=10**4, rho=2 * 10**5, methods=None, verbose=DEBUG
+                ):
                     if isprime(p):
                         n //= p
                         ps += [p]
@@ -123,7 +124,7 @@ def factor(n, DEBUG=False):
                         break
                 if n > 1:
                     # This is a hard to factor number
-                    if n <= 10 ** 100:
+                    if n <= 10**100:
                         ps += factor_yafu(n, DEBUG=DEBUG)
                     else:
                         ps += factor_cado_nfs(n, DEBUG=DEBUG)
@@ -133,7 +134,7 @@ def factor(n, DEBUG=False):
             else:
                 f[p] = 1
     if DEBUG:
-        print(f'f={f}')
+        print(f"f={f}")
     return f
 
 
@@ -160,7 +161,7 @@ def order(g, q):
                 break
         if found:
             break
-    assert pow(g, d, q) == 1, f'order failed: g={g} d={d} q={q}'
+    assert pow(g, d, q) == 1, f"order failed: g={g} d={d} q={q}"
     return d
 
 
@@ -179,7 +180,7 @@ def multiplicative_order(g, q):
                 break
         if found:
             break
-    assert pow(g, d, q) == 1, f'order failed: g={g} d={d} q={q}'
+    assert pow(g, d, q) == 1, f"order failed: g={g} d={d} q={q}"
     return d
 
 
@@ -200,7 +201,7 @@ def smooth_primes(b):
     for i in range(3, b, 2):
         if primes[i]:
             pp += [i]
-            for j in range(i ** 2, b, 2 * i):
+            for j in range(i**2, b, 2 * i):
                 primes[j] = False
     return pp
 
@@ -225,14 +226,14 @@ def is_Bsmooth(b, n):
 
 def random_sophie_germain_prime(d, frandom=random):
     while True:
-        p = frandom.randint(10 ** d, 10 ** (d + 1))
+        p = frandom.randint(10**d, 10 ** (d + 1))
         if isprime(p) and isprime(2 * p + 1):
             return 2 * p + 1
 
 
 def random_prime(d, frandom=random):
     while True:
-        p = frandom.randint(10 ** d, 10 ** (d + 1))
+        p = frandom.randint(10**d, 10 ** (d + 1))
         if isprime(p):
             return p
 

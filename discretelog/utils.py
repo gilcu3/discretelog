@@ -20,20 +20,19 @@ def mrange(a, b=None, c=1, DEBUG=False):
 
 def mexec(command, DEBUG=False):
     if DEBUG:
-        print(f'Executing {command}')
+        print(f"Executing {command}")
     if isinstance(command, str):
         command = command.split()
     captured_output = []
-    with Popen(command, stdout=PIPE,
-               stderr=STDOUT, text=True) as process:
+    with Popen(command, stdout=PIPE, stderr=STDOUT, text=True) as process:
         while True:
             output_line = process.stdout.readline()
             if not output_line and process.poll() is not None:
                 break
             if DEBUG:
-                print(output_line, end='')
+                print(output_line, end="")
             captured_output.append(output_line)
-    return ''.join(captured_output).strip()
+    return "".join(captured_output).strip()
 
 
 def parallel_for(f, params, prange, cores=None, DEBUG=False):
