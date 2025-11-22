@@ -1,7 +1,7 @@
 import nox
 
 
-@nox.session(python=["3.10", "3.11", "3.12", "pypy3.10"])
+@nox.session(python=["3.10", "3.11", "3.12", "3.13", "3.14", "pypy3.10", "pypy3.11"])
 def tests(session):
     python_executable = session.python
     session.run("poetry", "env", "use", python_executable)

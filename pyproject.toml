@@ -25,29 +25,27 @@ classifiers = [
 python = "^3.10"
 colorama = "^0.4.6"
 primefac = "^2.0.12"
-tqdm = "^4.66.4"
+tqdm = "^4.67.1"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.2.0"
-pytest-benchmark = "^4.0.0"
+pytest = "^9.0.1"
+pytest-benchmark = "^5.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
-coverage = {extras = ["toml"], version = "^7.5.1"}
-flake8 = "^7.0.0"
-flake8-bugbear = "^24.4.26"
-mypy = "^1.10.0"
-types-tqdm = "^4.66.0.20240417"
-types-colorama = "^0.4.15.20240311"
-black = "^24.4.2"
+coverage = {extras = ["toml"], version = "^7.12.0"}
+flake8 = "^7.3.0"
+flake8-bugbear = "^25.10.21"
+mypy = "^1.18.2"
+types-tqdm = "^4.67.0.20250809"
+types-colorama = "^0.4.15.20250801"
+black = "^25.11.0"
 
 [tool.coverage.run]
 omit = [".*", "*/site-packages/*"]
 [tool.coverage.report]
 omit = ["tests/*"]
 fail_under = 75
-
-
 
 [tool.pytest.ini_options]
 addopts = "-v --capture=sys"

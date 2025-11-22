@@ -6,26 +6,31 @@ implementations of well-known algorithms, inspired by the popular `primefac`
 library.
 
 ## Usage
+
 To find the discrete log of `v=641629670911834423534` modulo
 `n=1540571422742786915303` with base `g=25`:
+
 ```bash
 python -m discretelog 25 641629670911834423534 1540571422742786915303
 ```
 
 ### Installation
+
 The library is available in `pypi`, therefore can be installed with:
+
 ```bash
 python -m pip install discretelog
 ```
 
 ### Building from source
+
 Using `poetry` to generate a wheel file:
+
 ```bash
 git clone https://github.com/gilcu3/discretelog
 cd discretelog
 poetry build
 ```
-
 
 ## Status
 
@@ -35,7 +40,7 @@ This is a work in progress. Several issues will be worked on in the future:
 can be achieved
 - Several parts can be trivially made parallel
 - For the moment documentation is missing
-- The library should either fail gracefully or continue computing indefinitly
+- The library should either fail gracefully or continue computing indefinitely
 in case of big inputs. At the moment it simply crashes
 
 ### Discrete log algorithms implemented
