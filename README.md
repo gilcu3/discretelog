@@ -7,11 +7,11 @@ library.
 
 ## Usage
 
-To find the discrete log of `v=641629670911834423534` modulo
+To find the discrete log of `641629670911834423534` modulo
 `n=1540571422742786915303` with base `g=25`:
 
 ```bash
-python -m discretelog 25 641629670911834423534 1540571422742786915303
+python -m discretelog -g 25 -n 1540571422742786915303 641629670911834423534
 ```
 
 ### Installation
