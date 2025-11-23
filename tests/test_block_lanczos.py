@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import pytest
 
 from discretelog.block_lanczos import spmul2, spmul, spmax

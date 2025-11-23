@@ -565,12 +565,15 @@ def linear_sieve_dlog(
     if DEBUG:
         print(f"linear sieve dlog: p={p} gy={gy} y={y}")
     assert isprime(p)
+
     if op is None:
         op = order(gy, p)
+    else:
+        assert (p - 1) % op == 0
+        assert order(gy, p) == op
     assert isprime(op)
-    assert (p - 1) % op == 0
     assert op >= 10**6
-    assert order(gy, p) == op
+
     opq = op
     while (p - 1) % (opq * op) == 0:
         opq *= op
@@ -703,7 +706,6 @@ def linear_sieve_dlog(
                 else:
                     exps[fbq[-1]] = x[i]
             elif i >= m:
-                # print('more relations required')
                 solved = False
                 # break
 

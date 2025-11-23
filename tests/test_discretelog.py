@@ -1,8 +1,8 @@
-#! /usr/bin/env python
 import pytest
+from colorama import Fore
+
 from discretelog import dlog
 from discretelog.utils import mrange
-from colorama import Fore
 
 
 def single_test_random(nb, random):

@@ -1,7 +1,6 @@
-#! /usr/bin/env python
-
 import pytest
 from primefac import isprime
+from colorama import Fore
 
 from discretelog.common import (
     random_prime,
@@ -47,27 +46,40 @@ def test_special(frandom):
         (1000000000000000003, None, None, 52445056723),
         (100000000000000000039, None, None, 507526619771207),
         (1000000000000000000000000000057, None, None, 454197539),
+        # very slow test for relation finding phase
         (
             33380411190168454492618748210515919,
             28236217495251472904421868195362610,
             1040261549503090216732095527114575838939980980,
             None,
         ),
+        # very slow for individual logs phase
+        (
+            965646041566206382000881149016637,
+            338297506802314145874810655853096,
+            157024015806831411,
+            608402596429614983,
+        ),
     ]:
-        gengr = g is None or op is None
-        if g is None:
-            g = primitive_root(p)
-        if op is None:
-            op = order(g, p)
+        if g is None or op is None:
+            if g is None:
+                g = primitive_root(p)
+
+            if op is None:
+                op = order(g, p)
+
+            gr = pow(g, (p - 1) // op, p)
+        else:
+            gr = g
+        assert isprime(op)
+
         if e is None:
             e = frandom.randint(1, op)
         else:
             e %= op
-        if gengr:
-            gr = pow(g, (p - 1) // op, p)
-        else:
-            gr = g
+
         y = pow(gr, e, p)
+        print(Fore.GREEN + f"testing {gr=} {e=} {y=} {p=}" + Fore.RESET)
         ye = linear_sieve_dlog(p, gr, y, op, DEBUG=True)
         assert ye == e
 

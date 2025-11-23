@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import pytest
 
 from discretelog.common import random_sophie_germain_prime, primitive_root
