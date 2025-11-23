@@ -1,6 +1,5 @@
-#! /usr/bin/env python3 -u
-
 from math import isqrt, pi
+from typing import Callable
 
 from primefac import isprime
 
@@ -9,7 +8,7 @@ from .utils import mrange, mexec
 from .linear_sieve_index_calculus import linear_sieve_dlog
 
 
-def baby_steps_giant_steps(g, v, q):
+def baby_steps_giant_steps(g: int, v: int, q: int) -> int:
     po = order(g, q)
     n = isqrt(po) + 1
     an = pow(g, n, q)
@@ -27,16 +26,19 @@ def baby_steps_giant_steps(g, v, q):
         if cur in vals:
             d = n * p - vals[cur]
             return d % po
-    return None
+
+    raise Exception(
+        f"baby_steps_giant_steps did not find a solution for {g=} {v=} {q=}"
+    )
 
 
-def pollard_rho_dlg(g, v, q, DEBUG=False):
+def pollard_rho_dlg(g: int, v: int, q: int, DEBUG: bool = False) -> int:
     if DEBUG:
         print(f"pollard_rho_dlg: g={g} v={v} q={q}")
     if g == v:
         return 1
     n = order(g, q)
-    new_xab = [
+    new_xab: list[Callable[[int, int, int], tuple[int, int, int]]] = [
         lambda x, a, b: (x * x % q, a * 2 % n, b * 2 % n),
         lambda x, a, b: (x * g % q, (a + 1) % n, b),
         lambda x, a, b: (x * v % q, a, (b + 1) % n),
@@ -66,7 +68,7 @@ def pollard_rho_dlg(g, v, q, DEBUG=False):
     return d
 
 
-def dlog_cado_nfs(p, g, v, q, DEBUG=False):
+def dlog_cado_nfs(p: int, g: int, v: int, q: int, DEBUG: bool = False) -> int:
     ds = mexec("cado-nfs -dlp -ell %d target=%d,%d %d" % (p, g, v, q), DEBUG)
     ds = ds.split("\n")[-1]
     dg, dv = tuple(map(int, ds.split(",")))
@@ -74,7 +76,7 @@ def dlog_cado_nfs(p, g, v, q, DEBUG=False):
     return d
 
 
-def dlog_prime_order(g, v, q, p, DEBUG=False):
+def dlog_prime_order(g: int, v: int, q: int, p: int, DEBUG: bool = False) -> int:
     if p <= 10**10:
         d = baby_steps_giant_steps(g, v, q)
     elif p <= 10**14:
@@ -95,7 +97,9 @@ def dlog_prime_order(g, v, q, p, DEBUG=False):
     return d
 
 
-def dlog_prime_power_order(g, h, q, p, e, DEBUG=False):
+def dlog_prime_power_order(
+    g: int, h: int, q: int, p: int, e: int, DEBUG: bool = False
+) -> int:
     if e == 1:
         return dlog_prime_order(g, h, q, p, DEBUG)
     else:
@@ -112,8 +116,7 @@ def dlog_prime_power_order(g, h, q, p, e, DEBUG=False):
         return x
 
 
-def pohlig_hellman(g, v, q, DEBUG=False):
-
+def pohlig_hellman(g: int, v: int, q: int, DEBUG: bool = False) -> int:
     d = order(g, q)
     fd = factor(d, DEBUG)
     if len(fd) == 1:
@@ -132,25 +135,23 @@ def pohlig_hellman(g, v, q, DEBUG=False):
     return x
 
 
-def dlog_prime_power(g, v, p, e, DEBUG=False):
-
+def dlog_prime_power(
+    g: int, v: int, p: int, e: int, DEBUG: bool = False
+) -> tuple[int, int]:
     q = p**e
     o = order(g, q)
     assert pow(v, o, q) == 1, "%d is not in the subgroup of %d mod %d" % (v, g, q)
 
     if q <= 10**10:
-
         d = baby_steps_giant_steps(g, v, q)
-
     else:
-
         d = pohlig_hellman(g, v, q, DEBUG)
 
     assert pow(g, d, q) == v, "discrete log prime power %d is incorrect" % d
     return d, o
 
 
-def dlog_non_relative_prime(g, v, p, e):
+def dlog_non_relative_prime(g: int, v: int, p: int, e: int) -> tuple[int, int]:
     q = p**e
     if g == 0 and v == 0:
         return 1, 1
@@ -163,13 +164,15 @@ def dlog_non_relative_prime(g, v, p, e):
             else:
                 return d, 0
         gd = gd * g % q
-    return None, None
+    raise Exception(f"dlog of {v} with {g=} {p=} {e=} does not exist")
 
 
-def dlog(g, v, n, DEBUG=False):
+def dlog(g: int, v: int, n: int, DEBUG: bool = False) -> tuple[int, int]:
     fn = factor(n, DEBUG)
     congs = []
-    c, ct = None, None
+    c, ct = 0, None
+
+    failed_exception = Exception(f"dlog of {v} with {g=} {n=} does not exist")
 
     for p, e in fn.items():
         if g % p == 0:
@@ -181,22 +184,22 @@ def dlog(g, v, n, DEBUG=False):
             else:
                 if ti == 0:
                     if ct == 0 and c != xi:
-                        return None
+                        raise failed_exception
                     elif ct == 1 and c > xi:
-                        return None
+                        raise failed_exception
                     else:
                         c, ct = xi, ti
                 elif ti == 1:
                     if ct == 0:
                         if xi > c:
-                            return None
+                            raise failed_exception
                     elif ct == 1:
                         c = max(c, xi)
     if ct == 0:
         if pow(g, c, n) == v:
             return c, 0
         else:
-            return None
+            raise failed_exception
 
     for p, e in fn.items():
         if g % p != 0:
@@ -205,7 +208,7 @@ def dlog(g, v, n, DEBUG=False):
             vi = v % pi
             if gi == 1:
                 if vi != 1:
-                    return None
+                    raise failed_exception
             else:
                 xi, ti = dlog_prime_power(gi, vi, p, e, DEBUG)
                 congs += [(xi, ti)]
@@ -218,5 +221,5 @@ def dlog(g, v, n, DEBUG=False):
         if d < c:
             d = d + m * ((c - d + m - 1) // m)
 
-    assert pow(g, d, n) == v, "discrete log %d is incorrect" % d
+    assert pow(g, d, n) == v % n, "discrete log %d is incorrect" % d
     return d, dt

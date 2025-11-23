@@ -1,15 +1,15 @@
-#! /usr/bin/env python3
-
 from functools import cache
 from math import gcd, log2
 import random
+from types import ModuleType
+from typing import Generator
 
 from primefac import primefac, isprime
 
 from .utils import mexec, mrange
 
 
-def perfect_power(n):
+def perfect_power(n: int) -> tuple[int, int]:
     for e in range(2, int(log2(n)) + 1):
         r = round(n ** (1 / e))
         if r**e == n:
@@ -17,7 +17,7 @@ def perfect_power(n):
     return n, 1
 
 
-def solve_congruence(a, b, n):
+def solve_congruence(a: int, b: int, n: int) -> Generator[int, None, None]:
     g = gcd(a, n)
     if b % g != 0:
         return
@@ -26,16 +26,15 @@ def solve_congruence(a, b, n):
         yield s
 
 
-def egcd(a, b):
+def egcd(a: int, b: int) -> tuple[int, int, int]:
     if b == 0:
         return (1, 0, a)
     q = egcd(b, a % b)
     return (q[1], q[0] - a // b * q[1], q[2])
 
 
-def crt(rm):
-
-    def combine(c1, c2):
+def crt(rm: list[tuple[int, int]]) -> tuple[int, int]:
+    def combine(c1: tuple[int, int], c2: tuple[int, int]) -> tuple[int, int]:
         a1, m1 = c1
         a2, m2 = c2
         a, b, c = m1, a2 - a1, m2
@@ -44,7 +43,7 @@ def crt(rm):
         if a != 1:
             inv_a, _, g = egcd(a, c)
             if g != 1:
-                return None
+                raise Exception(f"crt of {rm=} does not exist")
             b *= inv_a
         a, m = a1 + m1 * b, m1 * c
         return a, m
@@ -54,14 +53,14 @@ def crt(rm):
     for rmi in rm:
         rv = combine(rv, rmi)
         if rv is None:
-            break
+            raise Exception(f"crt of {rm=} does not exist")
         n, m = rv
         n = n % m
     else:
         return n, m
 
 
-def factor_cado_nfs(n, DEBUG=False):
+def factor_cado_nfs(n: int, DEBUG: bool = False) -> list[int]:
     ds = mexec("cado-nfs %d" % n, DEBUG)
     ds = ds.split("\n")[-1]
     ps = list(map(int, ds.split()))
@@ -74,7 +73,7 @@ def factor_cado_nfs(n, DEBUG=False):
     return pss
 
 
-def factor_yafu(n, pretest=False, DEBUG=False):
+def factor_yafu(n: int, pretest: bool = False, DEBUG: bool = False) -> list[int]:
     pretest_opt = " -pretest 20" if pretest else ""
     f = mexec("yafu%s %d" % (pretest_opt, n), DEBUG=DEBUG)
     op = False
@@ -91,7 +90,7 @@ def factor_yafu(n, pretest=False, DEBUG=False):
 
 
 @cache
-def factor(n, DEBUG=False):
+def factor(n: int, DEBUG: bool = False) -> dict[int, int]:
     if DEBUG:
         print(f"factor: n={n}")
     if isprime(n):
@@ -139,7 +138,7 @@ def factor(n, DEBUG=False):
 
 
 @cache
-def phi(q):
+def phi(q: int) -> int:
     ans = 1
     for p, e in factor(q).items():
         ans *= p ** (e - 1) * (p - 1)
@@ -147,7 +146,7 @@ def phi(q):
 
 
 @cache
-def order(g, q):
+def order(g: int, q: int) -> int:
     assert gcd(g, q) == 1
     d = phi(q)
     qs = factor(d).keys()
@@ -166,7 +165,7 @@ def order(g, q):
 
 
 @cache
-def multiplicative_order(g, q):
+def multiplicative_order(g: int, q: int) -> int:
     assert gcd(g, q) == 1
     d = phi(q)
     qs = factor(d).keys()
@@ -185,15 +184,17 @@ def multiplicative_order(g, q):
 
 
 @cache
-def primitive_root(q):
+def primitive_root(q: int) -> int:
     o = phi(q)
     for g in range(2, q):
         if multiplicative_order(g, q) == o:
             return g
 
+    raise Exception(f"primitive_root of {q=} not found")
+
 
 @cache
-def smooth_primes(b):
+def smooth_primes(b: int) -> list[int]:
     primes = [True] * b
     pp = [2]
     for i in range(2, b, 2):
@@ -206,7 +207,7 @@ def smooth_primes(b):
     return pp
 
 
-def is_Bsmooth(b, n):
+def is_Bsmooth(b: int, n: int) -> tuple[bool, dict[int, int]]:
     ps = {}
     for p in smooth_primes(b):
         if n > 1 and p**2 > n:
@@ -214,7 +215,7 @@ def is_Bsmooth(b, n):
                 ps[n] = 1
                 return True, ps
             else:
-                return False, None
+                return False, {}
         e = 0
         while n % p == 0:
             e += 1
@@ -224,21 +225,21 @@ def is_Bsmooth(b, n):
     return n == 1, ps
 
 
-def random_sophie_germain_prime(d, frandom=random):
+def random_sophie_germain_prime(d: int, frandom: ModuleType = random) -> int:
     while True:
-        p = frandom.randint(10**d, 10 ** (d + 1))
+        p: int = frandom.randint(10**d, 10 ** (d + 1))
         if isprime(p) and isprime(2 * p + 1):
             return 2 * p + 1
 
 
-def random_prime(d, frandom=random):
+def random_prime(d: int, frandom: ModuleType = random) -> int:
     while True:
-        p = frandom.randint(10**d, 10 ** (d + 1))
+        p: int = frandom.randint(10**d, 10 ** (d + 1))
         if isprime(p):
             return p
 
 
-def row_reduce(M, q, DEBUG=False):
+def row_reduce(M: list[list[int]], q: int, DEBUG: bool = False) -> bool:
     q0, _ = perfect_power(q)
     assert isprime(q0)
     n, m = len(M), len(M[0])

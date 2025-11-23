@@ -1,14 +1,17 @@
-#! /usr/bin/env python
-
 from functools import partial
 import sys
+from typing import Callable
 
 from .utils import mrange
 
+matrix = list[list[int]]
+sparse_matrix = list[list[tuple[int, int]]]
+vector = list[int]
 
-def to_sp(mat):
+
+def to_sp(mat: matrix) -> tuple[sparse_matrix, int]:
     n, m = len(mat), len(mat[0])
-    nmat = [[] for _ in range(n)]
+    nmat: sparse_matrix = [[] for _ in range(n)]
     for i in range(n):
         for j, v in enumerate(mat[i]):
             if v != 0:
@@ -16,7 +19,7 @@ def to_sp(mat):
     return nmat, m
 
 
-def from_sp(mat, m):
+def from_sp(mat: sparse_matrix, m: int) -> matrix:
     n = len(mat)
     nmat = [[0] * m for _ in range(n)]
     for i in range(n):
@@ -25,8 +28,8 @@ def from_sp(mat, m):
     return nmat
 
 
-def sptr(mat, m):
-    nmat = [[] for _ in range(m)]
+def sptr(mat: sparse_matrix, m: int) -> sparse_matrix:
+    nmat: sparse_matrix = [[] for _ in range(m)]
     n = len(mat)
     for i in range(n):
         for j, v in mat[i]:
@@ -34,7 +37,7 @@ def sptr(mat, m):
     return nmat
 
 
-def spmax(mat):
+def spmax(mat: sparse_matrix) -> int:
     mx = 0
     for i in range(len(mat)):
         c1, c2 = 0, 0
@@ -47,7 +50,7 @@ def spmax(mat):
     return mx
 
 
-def spmul2(mx, mat, vec, q):
+def spmul2(mx: int, mat: sparse_matrix, vec: vector, q: int) -> vector:
     n = len(mat)
     nvec = [0] * n
     xvec = vec[:]
@@ -66,7 +69,7 @@ def spmul2(mx, mat, vec, q):
     return vmod(nvec, q)
 
 
-def spmul(mat, vec, q):
+def spmul(mat: sparse_matrix, vec: vector, q: int) -> vector:
     n = len(mat)
     nvec = [0] * n
     for i in range(n):
@@ -79,27 +82,29 @@ def spmul(mat, vec, q):
     return vmod(nvec, q)
 
 
-def dot(vec1, vec2, q):
+def dot(vec1: vector, vec2: vector, q: int) -> int:
     return sum([v1 * v2 for v1, v2 in zip(vec1, vec2)]) % q
 
 
-def smul(c, vec, q):
+def smul(c: int, vec: vector, q: int) -> vector:
     return [c * v % q for v in vec]
 
 
-def vadd(vec1, vec2):
+def vadd(vec1: vector, vec2: vector) -> vector:
     return [v1 + v2 for v1, v2 in zip(vec1, vec2)]
 
 
-def vsub(vec1, vec2):
+def vsub(vec1: vector, vec2: vector) -> vector:
     return [v1 - v2 for v1, v2 in zip(vec1, vec2)]
 
 
-def vmod(vec, q):
+def vmod(vec: vector, q: int) -> vector:
     return [c % q for c in vec]
 
 
-def matmul_choice(q, m, DEBUG=False):
+def matmul_choice(
+    q: int, m: sparse_matrix, DEBUG: bool = False
+) -> Callable[[sparse_matrix, vector, int], vector]:
     # This function chooses the best matrix multiplication routine
     # In my tests spmul2 with integer unpacked works better using pypy3 for
     # bigger numbers, which probably should not be the case
@@ -114,7 +119,9 @@ def matmul_choice(q, m, DEBUG=False):
     return spmul
 
 
-def block_lanczos(mat, d, b, q, DEBUG=False):
+def block_lanczos(
+    mat: sparse_matrix, d: int, b: vector, q: int, DEBUG: bool = False
+) -> vector | None:
     m, mt = mat, sptr(mat, d)
 
     # This is a hack to achieve better matrix multiplication performance
@@ -123,12 +130,13 @@ def block_lanczos(mat, d, b, q, DEBUG=False):
 
     v0 = rmult(mt, b, q)
 
-    def mulA(x):
+    def mulA(x: vector) -> vector:
         return rmult(mt, rmul(m, x, q), q)
 
     x = [0] * d
-    denp = None
-    v2, v1 = None, v0
+    denp = 0
+    v2: vector = []
+    v1 = v0
     for i in mrange(1, d + 1, DEBUG=DEBUG):
         Avi = mulA(v1)
         num = dot(Avi, Avi, q)
@@ -147,7 +155,11 @@ def block_lanczos(mat, d, b, q, DEBUG=False):
             vi = vsub(vi, ci1)
         denp = den1i
         v2, v1 = v1, vmod(vi, q)
+
     if not all(c % q == 0 for c in v1):
-        return None
-    # assert b == vmod(spmul(mat, x), q)
+        raise Exception(
+            f"block_lanczos could not find a solution after {d=} iterations"
+        )
+    assert b == spmul(mat, x, q)
+
     return vmod(x, q)

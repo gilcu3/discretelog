@@ -5,9 +5,11 @@ import argparse
 from . import dlog
 
 
-def main():
-    parser = argparse.ArgumentParser(prog="discretelog", description="Calculate discrete logarithm.")
-    parser.add_argument('-g', type=int, help="Logarithm base")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="discretelog", description="Calculate discrete logarithm."
+    )
+    parser.add_argument("-g", type=int, help="Logarithm base")
     parser.add_argument("-n", type=int, help="Modulo")
     parser.add_argument("v", type=int, help="Element")
 

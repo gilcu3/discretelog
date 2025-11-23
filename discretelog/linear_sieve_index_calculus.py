@@ -1,7 +1,6 @@
-#! /usr/bin/env python
-
 from math import isqrt, log, exp, ceil
-from os import cpu_count
+from typing import Any, Callable, Generator, Optional
+from multiprocessing import cpu_count, Queue
 
 from primefac import isprime
 
@@ -10,11 +9,12 @@ from .utils import mrange, parallel_for_balanced
 from .block_lanczos import to_sp, block_lanczos
 
 
-def L(p, alpha, c):
-    return int(exp(c * log(p) ** alpha * log(log(p)) ** (1 - alpha)))
+def L(p: int, alpha: float, c: float) -> int:
+    logp = log(p)
+    return int(exp(c * logp**alpha * log(logp) ** (1 - alpha)))
 
 
-def inverse_seq(x, q):
+def inverse_seq(x: int, q: int) -> Generator[tuple[int, int], None, None]:
     qpow = 1
     y, yq = 0, pow(x % q, -1, q)
     while True:
@@ -25,7 +25,7 @@ def inverse_seq(x, q):
         yield y, qpow
 
 
-def well_connected(k, graph, degc):
+def well_connected(k: int, graph: list[list[int]], degc: list[int]) -> None:
     que = []
     seen = [False] * k
     for v in range(k):
@@ -44,11 +44,13 @@ def well_connected(k, graph, degc):
                     que += [v]
 
 
-def structured_gaussian_elimination(rels, relsex, k):
-    cols = [set() for _ in range(k)]
+def structured_gaussian_elimination(
+    rels: list[list[int]], relsex: list[list[int]], k: int
+) -> Callable[[int], bool]:
+    cols: list[set[int]] = [set() for _ in range(k)]
     kp = len(rels[0])
     n = len(rels)
-    colsw = [set() for _ in range(n)]
+    colsw: list[set[int]] = [set() for _ in range(n)]
     singlerow = []
     doublerow = []
     for i, crex in enumerate(relsex):
@@ -64,7 +66,7 @@ def structured_gaussian_elimination(rels, relsex, k):
 
     assert len(colsw[0]) == 0
 
-    def reduce_row(c, orig, new):
+    def reduce_row(c: int, orig: int, new: int) -> None:
         relsex[new].remove(c)
         if len(relsex[new]) == 1:
             singlerow.append(new)
@@ -141,7 +143,7 @@ def structured_gaussian_elimination(rels, relsex, k):
     return lambda i: not marked[i]
 
 
-def mod_matrix(m, p):
+def mod_matrix(m: list[list[int]], p: int) -> None:
     for i in range(len(m)):
         for j in range(len(m[i])):
             m[i][j] %= p
@@ -149,9 +151,11 @@ def mod_matrix(m, p):
                 m[i][j] -= p
 
 
-def rels_filter(rels, relsex, k):
+def rels_filter(
+    rels: list[list[int]], relsex: list[list[int]], k: int
+) -> Callable[[int], bool]:
     degc = [0] * k
-    graph = [[] for _ in range(k)]
+    graph: list[list[int]] = [[] for _ in range(k)]
     for crex in relsex:
         for c in crex:
             degc[c] += 1
@@ -171,9 +175,15 @@ def rels_filter(rels, relsex, k):
     return lambda i: not marked[i]
 
 
-def rels_matrix(rels, relsex, k, rf, DEBUG=False):
+def rels_matrix(
+    rels: list[list[int]],
+    relsex: list[list[int]],
+    k: int,
+    rf: Callable[[int], bool],
+    DEBUG: bool = False,
+) -> tuple[list[list[int]], list[int | None]]:
     m = 0
-    kmap = [None] * k
+    kmap: list[int | None] = [None] * k
     nrels = []
     for i, crex in enumerate(relsex):
         if rf(i):
@@ -181,9 +191,11 @@ def rels_matrix(rels, relsex, k, rf, DEBUG=False):
                 if kmap[c] is None:
                     kmap[c] = m
                     m += 1
-    if DEBUG:
-        sparsity = 0
-        mx = 0
+
+    # Only used when debugging
+    sparsity = 0
+    mx = 0
+
     for i, (cr, crex) in enumerate(zip(rels, relsex)):
         if rf(i):
             cur = [0] * m + cr
@@ -192,11 +204,17 @@ def rels_matrix(rels, relsex, k, rf, DEBUG=False):
                 mx = max(mx, max([abs(c) for c in cr]))
             if len(crex) == 2:
                 u, v = crex
-                cur[kmap[u]] = -2
-                cur[kmap[v]] = -2
+                index = kmap[u]
+                assert index is not None
+                cur[index] = -2
+                index = kmap[v]
+                assert index is not None
+                cur[index] = -2
             elif len(crex) == 1:
                 v = crex[0]
-                cur[kmap[v]] = -2
+                index = kmap[v]
+                assert index is not None
+                cur[index] = -2
             nrels += [cur]
     if DEBUG:
         print(f"system sparsity: {sparsity / len(nrels)}")
@@ -204,13 +222,21 @@ def rels_matrix(rels, relsex, k, rf, DEBUG=False):
     return nrels, kmap
 
 
-def compute_dlog(dlogs, pf, p):
+def compute_dlog(dlogs: dict[int, int], pf: dict[int, int], p: int) -> int:
     return sum([dlogs[q] * e for q, e in pf.items()]) % p
 
 
 def linear_sieve(
-    p, A, B, climit=None, clog=None, eps=None, qlimit=None, fbq=None, fbqlogs=None
-):
+    p: int,
+    A: int,
+    B: int,
+    climit: Optional[int] = None,
+    clog: Optional[list[float]] = None,
+    eps: Optional[float] = None,
+    qlimit: Optional[int] = None,
+    fbq: Optional[list[int]] = None,
+    fbqlogs: Optional[list[float]] = None,
+) -> Generator[tuple[int, dict[int, int]], None, None]:
     if climit is None:
         climit = default_climit(p)
     M = A * B // p
@@ -227,7 +253,7 @@ def linear_sieve(
     if fbqlogs is None:
         fbqlogs = [log(q) for q in fbq]
 
-    sieve = [0] * climit
+    sieve = [0.0] * climit
     num = M * p - A * B
     topp = (M + 1) * p
     topc2 = min(climit, (topp + A - 1) // A - B)
@@ -253,7 +279,17 @@ def linear_sieve(
                 yield c2, fn
 
 
-def worker_linear_sieve(queue, rc2, p, H, clog, eps, qlimit, fbq, fbqlogs):
+def worker_linear_sieve(
+    queue: "Queue[Optional[tuple[int, list[tuple[int, dict[int, int]]]]]]",
+    rc2: list[int],
+    p: int,
+    H: int,
+    clog: list[float],
+    eps: float,
+    qlimit: int,
+    fbq: list[int],
+    fbqlogs: list[float],
+) -> None:
     for c2 in rc2:
         A, B, climit = H + c2, H, c2 + 1
         res = []
@@ -263,7 +299,7 @@ def worker_linear_sieve(queue, rc2, p, H, clog, eps, qlimit, fbq, fbqlogs):
     queue.put(None)
 
 
-def sign(a):
+def sign(a: int) -> int:
     if a > 0:
         return 1
     elif a < 0:
@@ -272,7 +308,7 @@ def sign(a):
         return 0
 
 
-def ratlift(u, bnd, m):
+def ratlift(u: int, bnd: int, m: int) -> tuple[int, int] | None:
     a1, a2 = m, u
     v1, v2 = 0, 1
     m2 = bnd
@@ -287,7 +323,18 @@ def ratlift(u, bnd, m):
         a1, a2, v1, v2 = a2, a1, v2, v1
 
 
-def individual_logs(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
+# this function still needs to be optimized
+def individual_logs(
+    dlogs: dict[int, int],
+    _Hlogs: Any,
+    y: int,
+    g: int,
+    p: int,
+    op: int,
+    qlimit: int,
+    _climit: int,
+    DEBUG: bool = False,
+) -> int:
     yy = y
     inf = min(op, 2**31)
     bound = isqrt(p) + 1
@@ -296,22 +343,34 @@ def individual_logs(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
         ab = ratlift(yy, bound, p)
         if ab is not None:
             a, b = ab
-            sa = 1 if a > 0 else -1
-            a = abs(a)
-            iss, af = is_Bsmooth(qlimit, a)
-            if iss:
-                iss, bf = is_Bsmooth(qlimit, b)
-                if iss:
-                    ye = (-w + ((p - 1) // 2 if sa == 1 else 0)) % op
-                    alog = compute_dlog(dlogs, af, op)
-                    blog = compute_dlog(dlogs, bf, op)
-                    ye = (ye + alog - blog) % op
-                    ye = ye * pow((p - 1) // op, -1, op) % op
-                    assert pow(g, ye * (p - 1) // op, p) == y
-                    return ye
+            iss, af = is_Bsmooth(qlimit, abs(a))
+            if not iss:
+                continue
+            iss, bf = is_Bsmooth(qlimit, abs(b))
+            if not iss:
+                continue
+            ye = (-w + ((p - 1) // 2 if sign(a) == 1 else 0)) % op
+            alog = compute_dlog(dlogs, af, op)
+            blog = compute_dlog(dlogs, bf, op)
+            ye = (ye + alog - blog) % op
+            ye = ye * pow((p - 1) // op, -1, op) % op
+            assert pow(g, ye * (p - 1) // op, p) == y
+            return ye
+
+    raise Exception(f"individual_logs could not find find solution {y=} {g=} {p=}")
 
 
-def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
+def individual_logs0(
+    dlogs: dict[int, int],
+    Hlogs: list[int | None],
+    y: int,
+    g: int,
+    p: int,
+    op: int,
+    qlimit: int,
+    climit: int,
+    DEBUG: bool = False,
+) -> int:
     # this would require ecm factoring to be efficient
     if DEBUG:
         print(f"individual log: y={y} g={g} op={op}")
@@ -334,6 +393,7 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
                 else:
                     lowu = ceil(H / qq)
                     found = False
+                    nlog, ulog, vlog = None, None, None
                     for u, uf in linear_sieve(p, 1, lowu, climit**2):
                         u += lowu
                         for v, nf in linear_sieve(p, u * qq % p, H, climit):
@@ -348,6 +408,7 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
                     if not found:
                         completed = False
                         break
+                    assert vlog is not None and nlog is not None and ulog is not None
                     ye = (ye + (nlog - ulog - vlog) * qe) % op
             if not completed:
                 continue
@@ -358,28 +419,42 @@ def individual_logs0(dlogs, Hlogs, y, g, p, op, qlimit, climit, DEBUG=False):
             assert pow(gr, ye, p) == y
             return ye
 
+    raise Exception(f"individual_logs could not find find solution {y=} {g=} {p=}")
 
-def default_climit(p):
+
+def default_climit(p: int) -> int:
     return int(3 * L(p, 0.5, 0.45)) + 10
 
 
-def default_qlimit(p):
+def default_qlimit(p: int) -> int:
     return int(2 * L(p, 0.5, 0.475)) + 10
 
 
 class CongruenceFinder:
-    def __init__(self, H, p, opq, fbq, fbqlogs, ifbq, qlimit, np):
+    def __init__(
+        self,
+        H: int,
+        p: int,
+        opq: int,
+        fbq: list[int],
+        fbqlogs: list[float],
+        ifbq: list[int | None],
+        qlimit: int,
+        np: int,
+    ):
         self.H, self.p, self.np = H, p, np
         self.fbq, self.fbqlogs, self.qlimit = fbq, fbqlogs, qlimit
         self.opq = opq
         self.c2 = 0
-        self.fb = []
-        self.infb = []
-        self.clog = []
+        self.fb: list[int] = []
+        self.infb: list[int | None] = []
+        self.clog: list[float] = []
         self.ifbq = ifbq
         self.eps = 1e-9
 
-    def sieve_values(self, n, DEBUG=False):
+    def sieve_values(
+        self, n: int, DEBUG: bool = False
+    ) -> Generator[tuple[int, int, dict[int, int]], None, None]:
         for c2 in mrange(self.c2, self.c2 + n, DEBUG=DEBUG):
             for c1, fn in linear_sieve(
                 self.p,
@@ -394,7 +469,9 @@ class CongruenceFinder:
             ):
                 yield c2, c1, fn
 
-    def sieve_values_parallel(self, n, DEBUG):
+    def sieve_values_parallel(
+        self, n: int, DEBUG: bool = False
+    ) -> Generator[tuple[int, int, dict[int, int]], None, None]:
         if (self.c2 + n) <= 1000 or cpu_count() <= 1:
             yield from self.sieve_values(n, DEBUG)
             return
@@ -409,7 +486,9 @@ class CongruenceFinder:
             for c1, fn in res[c2]:
                 yield c2, c1, fn
 
-    def get(self, n, DEBUG=False):
+    def get(
+        self, n: int, DEBUG: bool = False
+    ) -> tuple[list[list[int]], list[list[int]]]:
         if DEBUG:
             print(f"Searching congruences in range {self.c2}-{self.c2 + n}")
         rels, relsex = [], []
@@ -422,18 +501,28 @@ class CongruenceFinder:
             if self.infb[c1] is None:
                 self.infb[c1] = len(self.fb)
                 self.fb += [c1]
+            v1 = self.infb[c1]
+            assert v1 is not None
+
             if self.infb[c2] is None:
                 self.infb[c2] = len(self.fb)
                 self.fb += [c2]
+            v2 = self.infb[c2]
+            assert v2 is not None
+
             cr = [0] * self.np
             if c1 == c2:
-                crex = [self.infb[c1]]
+                crex = [v1]
                 for q, e in fn.items():
-                    cr[self.ifbq[q]] = e
+                    index = self.ifbq[q]
+                    assert index is not None
+                    cr[index] = e
             else:
                 for q, e in fn.items():
-                    cr[self.ifbq[q]] = 2 * e
-                crex = [self.infb[c1], self.infb[c2]]
+                    index = self.ifbq[q]
+                    assert index is not None
+                    cr[index] = 2 * e
+                crex = [v1, v2]
             rels += [cr]
             relsex += [crex]
         self.c2 += n
@@ -442,10 +531,10 @@ class CongruenceFinder:
         return rels, relsex
 
 
-def solve_gaussian(M, q, DEBUG=False):
+def solve_gaussian(M: list[list[int]], q: int, DEBUG: bool = False) -> list[int | None]:
     row_reduce(M, q, DEBUG)
     m = len(M[0])
-    x = [None] * m
+    x: list[int | None] = [None] * m
 
     for i in range(m - 1):
         df = 0
@@ -457,14 +546,22 @@ def solve_gaussian(M, q, DEBUG=False):
     return x
 
 
-def solve_lanczos(M, q, DEBUG=False):
+def solve_lanczos(M: list[list[int]], q: int, DEBUG: bool = False) -> list[int] | None:
     b = [(-v[-1]) % q for v in M]
-    M, d = to_sp([v[:-1] for v in M])
-    x = block_lanczos(M, d, b, q, DEBUG)
+    spM, d = to_sp([v[:-1] for v in M])
+    x = block_lanczos(spM, d, b, q, DEBUG)
     return x
 
 
-def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
+def linear_sieve_dlog(
+    p: int,
+    gy: int,
+    y: int,
+    op: Optional[int] = None,
+    qlimit: Optional[int] = None,
+    climit: Optional[int] = None,
+    DEBUG: bool = False,
+) -> int:
     if DEBUG:
         print(f"linear sieve dlog: p={p} gy={gy} y={y}")
     assert isprime(p)
@@ -491,13 +588,13 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
 
     fbq = smooth_primes(qlimit)
     np = len(fbq)
-    ifbq = [None] * qlimit
+    ifbq: list[Optional[int]] = [None] * qlimit
     for i, q in enumerate(fbq):
         ifbq[q] = i
     fbqlogs = [log(q) for q in fbq]
 
     rels = []
-    relsex = []
+    relsex: list[list[Any]] = []
     assert g <= qlimit
     if g not in fbq:
         gf = factor(g)
@@ -506,18 +603,25 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         cr = [0] * np
         for q, e in gf.items():
             assert q < qlimit
-            cr[ifbq[q]] = e
+            index = ifbq[q]
+            assert index is not None
+            cr[index] = e
         cr[-1] = -1
         rels += [cr]
         relsex += [[]]
     else:
-        ig = ifbq[g]
+        value = ifbq[g]
+        assert value is not None
+        ig = value
 
     solved = False
     CF = CongruenceFinder(H, p, opq, fbq, fbqlogs, ifbq, qlimit, np)
     nclimit = None
     first = True
     rounds = 0
+    Hexps: list[int | None] = []
+    exps: dict[int, int] = {}
+    gr: int | None = None
     while not solved:
         rounds += 1
         if rounds > 10:
@@ -559,7 +663,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
             print(f"filtered: n={n} relations with m={m + np} variables")
         if len(Mrels) < len(Mrels[0]) + 1:
             continue
-        ikmap = [None] * (len(Mrels[0]) - np)
+        ikmap: list[int | None] = [None] * (len(Mrels[0]) - np)
         for i, v in enumerate(kmap):
             if v is not None:
                 ikmap[v] = i
@@ -576,7 +680,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         if x is None:
             continue
 
-        iinfb = [None] * len(CF.fb)
+        iinfb: list[int | None] = [None] * len(CF.fb)
         for i, v in enumerate(CF.infb):
             if v is not None:
                 iinfb[v] = i
@@ -589,7 +693,10 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
         for i in range(m + np - 1):
             if x[i] is not None:
                 if i < m:
-                    v = iinfb[ikmap[i]]
+                    index = ikmap[i]
+                    assert index is not None
+                    v = iinfb[index]
+                    assert v is not None
                     Hexps[v] = x[i]
                 elif i - m != ig:
                     exps[fbq[i - m]] = x[i]
@@ -610,6 +717,7 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
                             if Hexps[iinfb[c]] is not None:
                                 other = Hexps[iinfb[c]]
                         v = iinfb[unknown[0]]
+                        assert v is not None
                         pf = {fbq[j]: rel[j] for j in range(np) if rel[j] != 0}
                         Hexps[v] = (
                             compute_dlog(exps, pf, opq) * (opq + 1) // 2 - other
@@ -618,25 +726,27 @@ def linear_sieve_dlog(p, gy, y, op=None, qlimit=None, climit=None, DEBUG=False):
             if not solved:
                 print(f"more relations required {len(exps)}/{np}")
 
+    assert gr is not None
     for q, e in exps.items():
         assert pow(gr, e, p) == pow(q, (p - 1) // opq, p)
+
     Hlogs = 0
-    for v, e in enumerate(Hexps):
-        if e is not None:
+    for vi, ei in enumerate(Hexps):
+        if ei is not None:
             Hlogs += 1
-            assert pow(gr, e, p) == pow(H + v, (p - 1) // opq, p)
+            assert pow(gr, ei, p) == pow(H + vi, (p - 1) // opq, p)
 
     if DEBUG:
         print(f"{len(exps)}/{np} discrete logs found")
         print(f"H {Hlogs}/{climit} logs found")
 
     xlogs = []
-    for x in [gy, y]:
-        xe = individual_logs(exps, Hexps, x, g, p, opq, qlimit, climit, DEBUG=DEBUG)
+    for xi in [gy, y]:
+        xe = individual_logs(exps, Hexps, xi, g, p, opq, qlimit, climit, DEBUG=DEBUG)
         if opq != op:
             assert xe % (opq // op) == 0
             xe //= opq // op
-            assert pow(g, (p - 1) // op * xe, p) == x
+            assert pow(g, (p - 1) // op * xe, p) == xi
         xlogs += [xe]
     ye = xlogs[1] * pow(xlogs[0], -1, op) % op
     assert pow(gy, ye, p) == y
